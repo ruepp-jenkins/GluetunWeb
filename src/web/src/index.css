@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ *
+ * GluetunWeb — Retro-terminal dark theme (phosphor-on-black).
+ * Tailwind v4 CSS-first config: tokens are exposed as utilities
+ * (e.g. bg-bg, text-phosphor, border-line, font-mono).
+ * ------------------------------------------------------------------ */
+@theme {
+  --font-mono: "JetBrains Mono", "Fira Code", "SFMono-Regular", "Menlo",
+    "Consolas", "Liberation Mono", monospace;
+  --default-font-family: var(--font-mono);
+
+  --color-bg: #0a0e0d;
+  --color-panel: #0f1512;
+  --color-panel-2: #131b17;
+  --color-line: #1f2a24;
+  --color-line-bright: #2c3b32;
+
+  --color-ink: #d7e0da;
+  --color-muted: #6f8378;
+  --color-faint: #47564d;
+
+  --color-phosphor: #3ddc84;
+  --color-phosphor-dim: #2a9c60;
+  --color-amber: #f5c451;
+  --color-cyan: #4cc9f0;
+  --color-danger: #ff5c5c;
+  --color-danger-dim: #b23c3c;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle terminal texture: faint scanline gradient fixed to the viewport. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(61, 220, 132, 0.015) 0px,
+    rgba(61, 220, 132, 0.015) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Scrollbars in keeping with the theme. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-bright) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line-bright);
+}
+
+::selection {
+  background: var(--color-phosphor-dim);
+  color: #04120a;
+}
+
+/* Autofill: keep inputs dark instead of the browser default. */
+input:-webkit-autofill,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-ink);
+  -webkit-box-shadow: 0 0 0 1000px var(--color-panel-2) inset;
+  caret-color: var(--color-ink);
+}

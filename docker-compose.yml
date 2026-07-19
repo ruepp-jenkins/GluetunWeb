@@ -1,0 +1,39 @@
+# GluetunWeb — VPN-linked proxy management dashboard.
+#
+# Quick start:
+#   1. Set a strong GLUETUNWEB_MASTER_KEY (used to encrypt stored secrets at rest).
+#   2. docker compose up -d --build
+#   3. Open http://localhost:8080 and create the admin account on first run.
+#
+# For Podman, see docs/PODMAN.md (point DOCKER_HOST at the rootless podman socket).
+
+services:
+  gluetunweb:
+    build: .
+    # image: ghcr.io/youruser/gluetunweb:latest   # or pull a prebuilt image instead of building
+    container_name: gluetunweb
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      # The auto-assigned proxy/control host ports (default range 20000-21000) are published
+      # on the Gluetun containers this app creates, NOT here. Expose that range on the host
+      # as needed by your firewall — the containers bind them directly.
+    environment:
+      # REQUIRED: encryption key for credentials at rest. Generate e.g. `openssl rand -base64 32`.
+      GLUETUNWEB_MASTER_KEY: "change-me-to-a-long-random-value"
+      # Optional: override the Docker endpoint (default = mounted socket below).
+      # DOCKER_HOST: "tcp://dockerproxy:2375"
+      TZ: "UTC"
+    # Lets the dashboard reach the proxy/control ports it publishes on the host (for the connectivity
+    # test and the live VPN-status/public-IP readout). GluetunWeb also finds the host via its default
+    # gateway automatically, so this is a belt-and-suspenders mapping — harmless if unused.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Persistent SQLite database (config + encrypted secrets).
+      - gluetunweb-data:/data
+      # Docker socket so the dashboard can manage container lifecycles.
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  gluetunweb-data:

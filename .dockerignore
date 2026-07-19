@@ -1,0 +1,18 @@
+# Build artifacts and local state — never send to the build context.
+**/bin
+**/obj
+**/node_modules
+src/GluetunWeb.Api/wwwroot
+**/*.db
+**/*.db-*
+*.db
+*.db-*
+.git
+.gitignore
+.vs
+.vscode
+.idea
+docs
+README.md
+LICENSE
+scratchpad

@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GluetunWeb.Api.Tests/GluetunWeb.Api.Tests.csproj" />
+    <Project Path="src/GluetunWeb.Api/GluetunWeb.Api.csproj" />
+  </Folder>
+</Solution>

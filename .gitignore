@@ -1,0 +1,25 @@
+# .NET
+bin/
+obj/
+*.user
+
+# Local SQLite databases
+*.db
+*.db-shm
+*.db-wal
+gluetunweb-design.db
+
+# Provider catalog clone (fetched at runtime)
+gluetun-servers/
+
+# Node / Vite
+node_modules/
+src/GluetunWeb.Api/wwwroot/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+
+# Misc
+scratchpad/
