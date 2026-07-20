@@ -12,7 +12,7 @@ import type {
 import { Table, Th, Td, Tr } from '../components/Table'
 import { Modal } from '../components/Modal'
 import { Field, Input, Select } from '../components/Field'
-import { Button, Banner, Panel, Spinner, StatusBadge, EmptyRow, Toggle } from '../components/ui'
+import { Button, Banner, Panel, Spinner, StatusBadge, EmptyRow, Toggle, IconButton, icons } from '../components/ui'
 import {
   CodeBlock,
   EndpointRow,
@@ -174,34 +174,22 @@ export function ConnectionsPage() {
                   {c.portBlockStart ? `${c.portBlockStart}–${c.portBlockEnd}` : 'unassigned'}
                 </Td>
                 <Td>
-                  <div className="flex flex-wrap justify-end gap-1">
-                    <Button variant="primary" disabled={busy} onClick={() => void act(c, api.deployConnection)}>
-                      {busy ? '···' : deployed ? 'redeploy' : 'deploy'}
-                    </Button>
-                    <Button variant="ghost" disabled={busy || !deployed} onClick={() => void act(c, api.startConnection)}>
-                      start
-                    </Button>
-                    <Button variant="ghost" disabled={busy || !deployed} onClick={() => void act(c, api.stopConnection)}>
-                      stop
-                    </Button>
-                    <Button variant="ghost" disabled={busy || !deployed} onClick={() => void act(c, api.restartConnection)}>
-                      restart
-                    </Button>
-                    <Button variant="ghost" disabled={!deployed} onClick={() => setLogsFor(c)}>
-                      logs
-                    </Button>
-                    <Button variant="ghost" disabled={!deployed} onClick={() => setTestFor(c)}>
-                      test
-                    </Button>
-                    <Button variant="ghost" onClick={() => setInfoFor(c)}>
-                      info
-                    </Button>
-                    <Button variant="ghost" onClick={() => setEditing(c)}>
-                      edit
-                    </Button>
-                    <Button variant="danger" disabled={busy} onClick={() => void remove(c)}>
-                      del
-                    </Button>
+                  <div className="flex justify-end gap-1">
+                    <IconButton
+                      variant="primary"
+                      label={deployed ? 'redeploy' : 'deploy'}
+                      icon={busy ? icons.busy : icons.deploy}
+                      disabled={busy}
+                      onClick={() => void act(c, api.deployConnection)}
+                    />
+                    <IconButton variant="ghost" label="start" icon={icons.start} disabled={busy || !deployed} onClick={() => void act(c, api.startConnection)} />
+                    <IconButton variant="ghost" label="stop" icon={icons.stop} disabled={busy || !deployed} onClick={() => void act(c, api.stopConnection)} />
+                    <IconButton variant="ghost" label="restart" icon={icons.restart} disabled={busy || !deployed} onClick={() => void act(c, api.restartConnection)} />
+                    <IconButton variant="ghost" label="logs" icon={icons.logs} disabled={!deployed} onClick={() => setLogsFor(c)} />
+                    <IconButton variant="ghost" label="test" icon={icons.test} disabled={!deployed} onClick={() => setTestFor(c)} />
+                    <IconButton variant="ghost" label="info" icon={icons.info} onClick={() => setInfoFor(c)} />
+                    <IconButton variant="ghost" label="edit" icon={icons.edit} onClick={() => setEditing(c)} />
+                    <IconButton variant="danger" label="delete" icon={icons.del} disabled={busy} onClick={() => void remove(c)} />
                   </div>
                 </Td>
               </Tr>
@@ -239,9 +227,15 @@ export function ConnectionsPage() {
                 </Td>
                 <Td className="text-amber">{m.connection ?? '—'}</Td>
                 <Td className="text-right">
-                  <Button variant="danger" disabled={removingId === m.id} onClick={() => void removeOrphan(m)}>
-                    {removingId === m.id ? '···' : 'remove'}
-                  </Button>
+                  <div className="flex justify-end">
+                    <IconButton
+                      variant="danger"
+                      label="remove from Docker"
+                      icon={removingId === m.id ? icons.busy : icons.del}
+                      disabled={removingId === m.id}
+                      onClick={() => void removeOrphan(m)}
+                    />
+                  </div>
                 </Td>
               </Tr>
             ))}

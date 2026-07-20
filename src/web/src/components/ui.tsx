@@ -26,6 +26,48 @@ export function Button({
   )
 }
 
+/**
+ * Shared emoji glyphs for row actions. Centralised so every page uses the same icon for the same
+ * action — deploy is always 🚀, delete always 🗑, and so on.
+ */
+export const icons = {
+  deploy: '🚀',
+  start: '▶',
+  stop: '⏹',
+  restart: '🔁',
+  logs: '📃',
+  test: '🧪',
+  info: 'ℹ',
+  edit: '✎',
+  del: '🗑',
+  busy: '⏳',
+} as const
+
+/**
+ * Compact single-glyph action button. Keeps the bordered terminal look of {@link Button} but shows
+ * an icon instead of text, with the word exposed via title/aria-label — so a row of actions fits on
+ * one line. Used for every per-row action across the app.
+ */
+export function IconButton({
+  icon,
+  label,
+  variant = 'ghost',
+  className = '',
+  ...rest
+}: ButtonHTMLAttributes<HTMLButtonElement> & { icon: ReactNode; label: string; variant?: Variant }) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      className={`inline-flex h-7 w-7 items-center justify-center border text-[13px] leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${variantCls[variant]} ${className}`}
+      {...rest}
+    >
+      <span aria-hidden="true">{icon}</span>
+    </button>
+  )
+}
+
 export function Toggle({
   checked,
   onChange,

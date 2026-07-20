@@ -4,7 +4,7 @@ import type { Credential, CredentialRequest, CredentialUsage } from '../api/type
 import { Table, Th, Td, Tr } from '../components/Table'
 import { Modal } from '../components/Modal'
 import { Field, Input, Select } from '../components/Field'
-import { Button, Banner, Spinner, EmptyRow } from '../components/ui'
+import { Button, Banner, Spinner, EmptyRow, IconButton, icons } from '../components/ui'
 import { RedeployPrompt } from '../components/RedeployPrompt'
 
 const empty: CredentialRequest = {
@@ -98,13 +98,15 @@ export function CredentialsPage() {
               </Td>
               <Td className="text-faint">{c.notes || '—'}</Td>
               <Td className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button variant="ghost" onClick={() => setEditing(c)}>
-                    edit
-                  </Button>
-                  <Button variant="danger" disabled={c.usedBy > 0} onClick={() => void remove(c)}>
-                    del
-                  </Button>
+                <div className="flex justify-end gap-1">
+                  <IconButton variant="ghost" label="edit" icon={icons.edit} onClick={() => setEditing(c)} />
+                  <IconButton
+                    variant="danger"
+                    label={c.usedBy > 0 ? 'in use — cannot delete' : 'delete'}
+                    icon={icons.del}
+                    disabled={c.usedBy > 0}
+                    onClick={() => void remove(c)}
+                  />
                 </div>
               </Td>
             </Tr>

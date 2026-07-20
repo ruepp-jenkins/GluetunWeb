@@ -5,7 +5,7 @@ import { Table, Th, Td, Tr } from '../components/Table'
 import { Modal } from '../components/Modal'
 import { Field, Input, Select } from '../components/Field'
 import { EnvVarDoc } from '../components/EnvVarDoc'
-import { Button, Banner, Spinner, StatusBadge, EmptyRow } from '../components/ui'
+import { Button, Banner, Spinner, StatusBadge, EmptyRow, IconButton, icons } from '../components/ui'
 import {
   CodeBlock,
   EndpointRow,
@@ -160,34 +160,22 @@ export function LoadBalancersPage() {
                   {l.portBlockStart ? `${l.portBlockStart}–${l.portBlockEnd}` : 'unassigned'}
                 </Td>
                 <Td>
-                  <div className="flex flex-wrap justify-end gap-1">
-                    <Button variant="primary" disabled={busy} onClick={() => void act(l, api.deployLoadBalancer)}>
-                      {busy ? '···' : deployed ? 'redeploy' : 'deploy'}
-                    </Button>
-                    <Button variant="ghost" disabled={busy || !deployed} onClick={() => void act(l, api.startLoadBalancer)}>
-                      start
-                    </Button>
-                    <Button variant="ghost" disabled={busy || !deployed} onClick={() => void act(l, api.stopLoadBalancer)}>
-                      stop
-                    </Button>
-                    <Button variant="ghost" disabled={busy || !deployed} onClick={() => void act(l, api.restartLoadBalancer)}>
-                      restart
-                    </Button>
-                    <Button variant="ghost" disabled={!deployed} onClick={() => setTestFor(l)}>
-                      test
-                    </Button>
-                    <Button variant="ghost" onClick={() => setInfoFor(l)}>
-                      info
-                    </Button>
-                    <Button variant="ghost" disabled={!deployed} onClick={() => setLogsFor(l)}>
-                      logs
-                    </Button>
-                    <Button variant="ghost" onClick={() => setEditing(l)}>
-                      edit
-                    </Button>
-                    <Button variant="danger" disabled={busy} onClick={() => void remove(l)}>
-                      del
-                    </Button>
+                  <div className="flex justify-end gap-1">
+                    <IconButton
+                      variant="primary"
+                      label={deployed ? 'redeploy' : 'deploy'}
+                      icon={busy ? icons.busy : icons.deploy}
+                      disabled={busy}
+                      onClick={() => void act(l, api.deployLoadBalancer)}
+                    />
+                    <IconButton variant="ghost" label="start" icon={icons.start} disabled={busy || !deployed} onClick={() => void act(l, api.startLoadBalancer)} />
+                    <IconButton variant="ghost" label="stop" icon={icons.stop} disabled={busy || !deployed} onClick={() => void act(l, api.stopLoadBalancer)} />
+                    <IconButton variant="ghost" label="restart" icon={icons.restart} disabled={busy || !deployed} onClick={() => void act(l, api.restartLoadBalancer)} />
+                    <IconButton variant="ghost" label="test" icon={icons.test} disabled={!deployed} onClick={() => setTestFor(l)} />
+                    <IconButton variant="ghost" label="info" icon={icons.info} onClick={() => setInfoFor(l)} />
+                    <IconButton variant="ghost" label="logs" icon={icons.logs} disabled={!deployed} onClick={() => setLogsFor(l)} />
+                    <IconButton variant="ghost" label="edit" icon={icons.edit} onClick={() => setEditing(l)} />
+                    <IconButton variant="danger" label="delete" icon={icons.del} disabled={busy} onClick={() => void remove(l)} />
                   </div>
                 </Td>
               </Tr>
