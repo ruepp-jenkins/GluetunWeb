@@ -155,6 +155,12 @@ public class CustomVpnService(AppDbContext db, ISecretProtector protector)
         try
         {
             var raw = protector.Decrypt(c.RawConfigEnc) ?? string.Empty;
+            // Show the configured endpoint hostname in place of the {{DNS_IP}} placeholder, so the
+            // list reads e.g. "vpn.example.com" instead of the literal replace token. With no
+            // endpoint name set, the placeholder is left as-is.
+            if (!string.IsNullOrWhiteSpace(c.EndpointDnsName))
+                raw = EndpointResolver.Substitute(raw, c.EndpointDnsName.Trim());
+
             if (c.VpnType == VpnType.WireGuard)
             {
                 var wg = WireGuardConfigParser.Parse(raw);
