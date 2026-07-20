@@ -9,15 +9,12 @@
 
 services:
   gluetunweb:
-    build: .
-    # image: ghcr.io/youruser/gluetunweb:latest   # or pull a prebuilt image instead of building
+    # build: . # if you want to build it yourselfe
+    image: ruepp/gluetun-web
     container_name: gluetunweb
     restart: unless-stopped
     ports:
       - "8080:8080"
-      # The auto-assigned proxy/control host ports (default range 20000-21000) are published
-      # on the Gluetun containers this app creates, NOT here. Expose that range on the host
-      # as needed by your firewall — the containers bind them directly.
     environment:
       # REQUIRED: encryption key for credentials at rest. Generate e.g. `openssl rand -base64 32`.
       GLUETUNWEB_MASTER_KEY: "change-me-to-a-long-random-value"
@@ -31,9 +28,6 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       # Persistent SQLite database (config + encrypted secrets).
-      - gluetunweb-data:/data
+      - ./gluetunweb-data:/data
       # Docker socket so the dashboard can manage container lifecycles.
       - /var/run/docker.sock:/var/run/docker.sock
-
-volumes:
-  gluetunweb-data:
