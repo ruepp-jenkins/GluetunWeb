@@ -32,6 +32,7 @@ export function ConnectionsPage() {
   const [providers, setProviders] = useState<Provider[]>([])
   const [customs, setCustoms] = useState<CustomVpn[]>([])
   const [editing, setEditing] = useState<Connection | null>(null)
+  const [duplicating, setDuplicating] = useState<Connection | null>(null)
   const [creating, setCreating] = useState(false)
   const [logsFor, setLogsFor] = useState<Connection | null>(null)
   const [infoFor, setInfoFor] = useState<Connection | null>(null)
@@ -189,6 +190,7 @@ export function ConnectionsPage() {
                     <ActionButton variant="ghost" action="test" disabled={!deployed} onClick={() => setTestFor(c)} />
                     <ActionButton variant="ghost" action="info" onClick={() => setInfoFor(c)} />
                     <ActionButton variant="ghost" action="edit" onClick={() => setEditing(c)} />
+                    <ActionButton variant="ghost" action="duplicate" onClick={() => setDuplicating(c)} />
                     <ActionButton variant="danger" action="del" busy={busy} disabled={busy} onClick={() => void remove(c)} />
                   </div>
                 </Td>
@@ -244,18 +246,21 @@ export function ConnectionsPage() {
         </Panel>
       )}
 
-      {(creating || editing) && (
+      {(creating || editing || duplicating) && (
         <ConnectionForm
           initial={editing}
+          prefill={duplicating}
           providers={providers}
           customs={customs}
           onClose={() => {
             setCreating(false)
             setEditing(null)
+            setDuplicating(null)
           }}
           onSaved={async () => {
             setCreating(false)
             setEditing(null)
+            setDuplicating(null)
             await load()
           }}
         />
@@ -287,42 +292,51 @@ export function ConnectionsPage() {
 
 function ConnectionForm({
   initial,
+  prefill,
   providers,
   customs,
   onClose,
   onSaved,
 }: {
   initial: Connection | null
+  /** When set (and initial is null), the form opens in create mode pre-filled from this entry. */
+  prefill?: Connection | null
   providers: Provider[]
   customs: CustomVpn[]
   onClose: () => void
   onSaved: () => void
 }) {
+  // A duplicate is a create pre-filled from an existing connection. Proxy passwords are never sent
+  // to the browser, so those are re-entered — everything else (source, overrides, proxy toggles,
+  // DNS/firewall/port-forwarding) carries over.
+  const isDuplicate = !initial && !!prefill
+  const source = initial ?? prefill ?? null
   const [form, setForm] = useState<ConnectionRequest>({
-    identifier: initial?.identifier ?? '',
-    sourceType: initial?.sourceType ?? 'provider',
-    providerId: initial?.providerId ?? providers[0]?.id ?? null,
-    customVpnConfigId: initial?.customVpnConfigId ?? customs[0]?.id ?? null,
-    serverCountriesOverride: initial?.serverCountriesOverride ?? null,
-    serverCitiesOverride: initial?.serverCitiesOverride ?? null,
-    serverHostnamesOverride: initial?.serverHostnamesOverride ?? null,
-    enableSocks5: initial?.enableSocks5 ?? true,
-    enableHttpProxy: initial?.enableHttpProxy ?? false,
-    socks5User: initial?.socks5User ?? null,
+    // An identifier must be unique and match ^[a-zA-Z0-9-]+$, so a copy gets a -copy suffix.
+    identifier: isDuplicate ? `${source!.identifier}-copy` : source?.identifier ?? '',
+    sourceType: source?.sourceType ?? 'provider',
+    providerId: source?.providerId ?? providers[0]?.id ?? null,
+    customVpnConfigId: source?.customVpnConfigId ?? customs[0]?.id ?? null,
+    serverCountriesOverride: source?.serverCountriesOverride ?? null,
+    serverCitiesOverride: source?.serverCitiesOverride ?? null,
+    serverHostnamesOverride: source?.serverHostnamesOverride ?? null,
+    enableSocks5: source?.enableSocks5 ?? true,
+    enableHttpProxy: source?.enableHttpProxy ?? false,
+    socks5User: source?.socks5User ?? null,
     socks5Password: null,
-    enableShadowsocks: initial?.enableShadowsocks ?? false,
+    enableShadowsocks: source?.enableShadowsocks ?? false,
     shadowsocksPassword: null,
-    shadowsocksCipher: initial?.shadowsocksCipher ?? 'chacha20-ietf-poly1305',
-    shadowsocksLog: initial?.shadowsocksLog ?? false,
-    portForwarding: initial?.portForwarding ?? false,
-    portForwardingProvider: initial?.portForwardingProvider ?? null,
-    portForwardingPortsCount: initial?.portForwardingPortsCount ?? 1,
-    firewallVpnInputPorts: initial?.firewallVpnInputPorts ?? null,
-    firewallOutboundSubnets: initial?.firewallOutboundSubnets ?? null,
-    wireGuardMtu: initial?.wireGuardMtu ?? null,
-    blockMalicious: initial?.blockMalicious ?? true,
-    blockAds: initial?.blockAds ?? false,
-    dnsUnblockHostnames: initial?.dnsUnblockHostnames ?? null,
+    shadowsocksCipher: source?.shadowsocksCipher ?? 'chacha20-ietf-poly1305',
+    shadowsocksLog: source?.shadowsocksLog ?? false,
+    portForwarding: source?.portForwarding ?? false,
+    portForwardingProvider: source?.portForwardingProvider ?? null,
+    portForwardingPortsCount: source?.portForwardingPortsCount ?? 1,
+    firewallVpnInputPorts: source?.firewallVpnInputPorts ?? null,
+    firewallOutboundSubnets: source?.firewallOutboundSubnets ?? null,
+    wireGuardMtu: source?.wireGuardMtu ?? null,
+    blockMalicious: source?.blockMalicious ?? true,
+    blockAds: source?.blockAds ?? false,
+    dnsUnblockHostnames: source?.dnsUnblockHostnames ?? null,
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
@@ -362,7 +376,13 @@ function ConnectionForm({
 
   return (
     <Modal
-      title={initial ? `edit connection · ${initial.identifier}` : 'new connection'}
+      title={
+        initial
+          ? `edit connection · ${initial.identifier}`
+          : isDuplicate
+            ? `duplicate connection · ${prefill!.identifier}`
+            : 'new connection'
+      }
       onClose={onClose}
       wide
       footer={
@@ -376,6 +396,15 @@ function ConnectionForm({
         </>
       }
     >
+      {isDuplicate && (
+        <div className="mb-3">
+          <Banner kind="info">
+            Duplicated from <span className="text-ink">{prefill!.identifier}</span>. Settings are
+            copied; any proxy passwords must be re-entered. Rename and save to create a separate
+            connection.
+          </Banner>
+        </div>
+      )}
       {error && <div className="mb-3"><Banner kind="error">{error}</Banner></div>}
       <form onSubmit={submit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">

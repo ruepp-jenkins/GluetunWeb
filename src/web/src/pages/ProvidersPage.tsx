@@ -51,6 +51,7 @@ export function ProvidersPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [credentials, setCredentials] = useState<Credential[]>([])
   const [editing, setEditing] = useState<Provider | null>(null)
+  const [duplicating, setDuplicating] = useState<Provider | null>(null)
   const [creating, setCreating] = useState(false)
   const [pageError, setPageError] = useState<string | null>(null)
 
@@ -172,6 +173,7 @@ export function ProvidersPage() {
               <Td className="text-right">
                 <div className="flex flex-wrap justify-end gap-1">
                   <ActionButton variant="ghost" action="edit" onClick={() => setEditing(p)} />
+                  <ActionButton variant="ghost" action="duplicate" onClick={() => setDuplicating(p)} />
                   <ActionButton variant="danger" action="del" onClick={() => remove(p)} />
                 </div>
               </Td>
@@ -180,18 +182,21 @@ export function ProvidersPage() {
         )}
       </Table>
 
-      {(creating || editing) && (
+      {(creating || editing || duplicating) && (
         <ProviderForm
           initial={editing}
+          prefill={duplicating}
           providers={catalog}
           credentials={credentials}
           onClose={() => {
             setCreating(false)
             setEditing(null)
+            setDuplicating(null)
           }}
           onSaved={async () => {
             setCreating(false)
             setEditing(null)
+            setDuplicating(null)
             await load()
           }}
         />
@@ -202,32 +207,41 @@ export function ProvidersPage() {
 
 function ProviderForm({
   initial,
+  prefill,
   providers,
   credentials,
   onClose,
   onSaved,
 }: {
   initial: Provider | null
+  /** When set (and initial is null), the form opens in create mode pre-filled from this entry. */
+  prefill?: Provider | null
   providers: string[]
   credentials: Credential[]
   onClose: () => void
   onSaved: () => void
 }) {
+  // A duplicate is a create pre-filled from an existing entry. `initial` still drives edit-vs-create,
+  // the title, and the secret placeholders — so secrets (never sent to the browser) are simply
+  // re-entered, unless a shared credential supplies them.
+  const isDuplicate = !initial && !!prefill
+  const source = initial ?? prefill ?? null
   const [form, setForm] = useState<ProviderRequest>(
-    initial
+    source
       ? {
           ...empty,
-          name: initial.name,
-          providerType: initial.providerType,
-          vpnType: initial.vpnType,
-          openVpnProtocol: initial.openVpnProtocol,
-          credentialId: initial.credentialId,
-          openVpnUser: initial.openVpnUser,
-          wireGuardAddresses: initial.wireGuardAddresses,
-          serverCountries: initial.serverCountries,
-          serverCities: initial.serverCities,
-          serverRegions: initial.serverRegions,
-          serverHostnames: initial.serverHostnames,
+          // A provider name must be unique, so a copy can't reuse it verbatim.
+          name: isDuplicate ? `${source.name}-copy` : source.name,
+          providerType: source.providerType,
+          vpnType: source.vpnType,
+          openVpnProtocol: source.openVpnProtocol,
+          credentialId: source.credentialId,
+          openVpnUser: source.openVpnUser,
+          wireGuardAddresses: source.wireGuardAddresses,
+          serverCountries: source.serverCountries,
+          serverCities: source.serverCities,
+          serverRegions: source.serverRegions,
+          serverHostnames: source.serverHostnames,
         }
       : empty,
   )
@@ -335,7 +349,13 @@ function ProviderForm({
 
   return (
     <Modal
-      title={initial ? `edit provider · ${initial.name}` : 'new provider'}
+      title={
+        initial
+          ? `edit provider · ${initial.name}`
+          : isDuplicate
+            ? `duplicate provider · ${prefill!.name}`
+            : 'new provider'
+      }
       onClose={onClose}
       wide
       footer={
@@ -349,6 +369,14 @@ function ProviderForm({
         </>
       }
     >
+      {isDuplicate && (
+        <div className="mb-3">
+          <Banner kind="info">
+            Duplicated from <span className="text-ink">{prefill!.name}</span>. Everything is copied
+            except stored secrets — {usesCredential ? 'the shared credential carries those over.' : 're-enter the password/keys below.'}
+          </Banner>
+        </div>
+      )}
       {error && <div className="mb-3"><Banner kind="error">{error}</Banner></div>}
       <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
         <Field label="Name" doc="providerName" required error={errors.name}>

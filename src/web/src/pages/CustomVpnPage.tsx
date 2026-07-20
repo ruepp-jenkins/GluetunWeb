@@ -11,6 +11,7 @@ import { customVpnSchema, zodErrors } from '../lib/validation'
 export function CustomVpnPage() {
   const [items, setItems] = useState<CustomVpn[] | null>(null)
   const [editing, setEditing] = useState<CustomVpn | null>(null)
+  const [duplicating, setDuplicating] = useState<CustomVpn | null>(null)
   const [creating, setCreating] = useState(false)
   const [credentials, setCredentials] = useState<Credential[]>([])
   const [pageError, setPageError] = useState<string | null>(null)
@@ -75,6 +76,7 @@ export function CustomVpnPage() {
               <Td className="text-right">
                 <div className="flex flex-wrap justify-end gap-1">
                   <ActionButton variant="ghost" action="edit" onClick={() => setEditing(c)} />
+                  <ActionButton variant="ghost" action="duplicate" onClick={() => setDuplicating(c)} />
                   <ActionButton variant="danger" action="del" onClick={() => remove(c)} />
                 </div>
               </Td>
@@ -83,17 +85,20 @@ export function CustomVpnPage() {
         )}
       </Table>
 
-      {(creating || editing) && (
+      {(creating || editing || duplicating) && (
         <CustomForm
           initial={editing}
+          prefill={duplicating}
           credentials={credentials}
           onClose={() => {
             setCreating(false)
             setEditing(null)
+            setDuplicating(null)
           }}
           onSaved={async () => {
             setCreating(false)
             setEditing(null)
+            setDuplicating(null)
             await load()
           }}
         />
@@ -104,45 +109,53 @@ export function CustomVpnPage() {
 
 function CustomForm({
   initial,
+  prefill,
   credentials,
   onClose,
   onSaved,
 }: {
   initial: CustomVpn | null
+  /** When set (and initial is null), the form opens in create mode pre-filled from this entry. */
+  prefill?: CustomVpn | null
   credentials: Credential[]
   onClose: () => void
   onSaved: () => void
 }) {
+  // A duplicate is a create pre-filled from an existing entry. The config text is copied too (the
+  // admin can read their own via /raw); only the OpenVPN password can't, unless a credential supplies it.
+  const isDuplicate = !initial && !!prefill
+  const source = initial ?? prefill ?? null
   const [form, setForm] = useState<CustomVpnRequest>({
-    name: initial?.name ?? '',
-    vpnType: initial?.vpnType ?? 'openvpn',
+    name: isDuplicate ? `${source!.name}-copy` : source?.name ?? '',
+    vpnType: source?.vpnType ?? 'openvpn',
     rawConfig: '',
-    notes: initial?.notes ?? null,
-    openVpnUser: initial?.openVpnUser ?? null,
+    notes: source?.notes ?? null,
+    openVpnUser: source?.openVpnUser ?? null,
     openVpnPassword: null,
-    endpointDnsName: initial?.endpointDnsName ?? null,
-    credentialId: initial?.credentialId ?? null,
+    endpointDnsName: source?.endpointDnsName ?? null,
+    credentialId: source?.credentialId ?? null,
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [loadingRaw, setLoadingRaw] = useState(!!initial)
+  const [loadingRaw, setLoadingRaw] = useState(!!source)
   const [fileName, setFileName] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  // Load the existing (decrypted) config so it can be freely edited.
+  // Load the source's (decrypted) config so it can be freely edited — for both editing and
+  // duplicating. A brand-new config starts blank.
   useEffect(() => {
-    if (!initial) return
+    if (!source) return
     let active = true
     api
-      .getCustomVpnRaw(initial.id)
+      .getCustomVpnRaw(source.id)
       .then((r) => active && setForm((f) => ({ ...f, rawConfig: r.rawConfig })))
       .catch((e) => active && setError(e instanceof ApiError ? e.message : 'Could not load config.'))
       .finally(() => active && setLoadingRaw(false))
     return () => {
       active = false
     }
-  }, [initial])
+  }, [source])
 
   const set = <K extends keyof CustomVpnRequest>(k: K, v: CustomVpnRequest[K]) => setForm((f) => ({ ...f, [k]: v }))
   const isOpenVpn = form.vpnType === 'openvpn'
@@ -189,7 +202,13 @@ function CustomForm({
 
   return (
     <Modal
-      title={initial ? `edit config · ${initial.name}` : 'new custom config'}
+      title={
+        initial
+          ? `edit config · ${initial.name}`
+          : isDuplicate
+            ? `duplicate config · ${prefill!.name}`
+            : 'new custom config'
+      }
       onClose={onClose}
       wide
       footer={
@@ -203,6 +222,17 @@ function CustomForm({
         </>
       }
     >
+      {isDuplicate && (
+        <div className="mb-3">
+          <Banner kind="info">
+            Duplicated from <span className="text-ink">{prefill!.name}</span> — including its config
+            text.{' '}
+            {form.vpnType === 'openvpn' && !form.credentialId
+              ? 'Re-enter the OpenVPN password below.'
+              : 'Nothing else to fill in.'}
+          </Banner>
+        </div>
+      )}
       {error && <div className="mb-3"><Banner kind="error">{error}</Banner></div>}
       <form onSubmit={submit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">

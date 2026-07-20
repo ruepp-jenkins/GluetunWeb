@@ -38,6 +38,7 @@ export type ActionKey =
   | 'test'
   | 'info'
   | 'edit'
+  | 'duplicate'
   | 'del'
 
 interface ActionGlyphs {
@@ -60,6 +61,7 @@ export const ACTIONS: Record<ActionKey, ActionGlyphs> = {
   test: { word: 'test', icons: '🧪', ascii: '✓' },
   info: { word: 'info', icons: 'ℹ', ascii: 'ℹ' },
   edit: { word: 'edit', icons: '✎', ascii: '✎' },
+  duplicate: { word: 'duplicate', icons: '📋', ascii: '⧉' },
   del: { word: 'del', icons: '🗑', ascii: '✕' },
 }
 

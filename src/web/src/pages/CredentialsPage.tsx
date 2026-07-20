@@ -131,7 +131,10 @@ export function CredentialsPage() {
             if (!wasEditing) return
             try {
               const usages = await api.credentialConnections(saved.id)
-              if (usages.length > 0) setAffected({ name: saved.name, usages })
+              // Only prompt when there is actually something to redeploy — a running connection.
+              // Stopped or never-deployed ones pick the change up on their next deploy anyway, so a
+              // "redeploy 0" popup would just be noise.
+              if (usages.some((u) => u.running)) setAffected({ name: saved.name, usages })
             } catch {
               /* the credential is saved either way — the prompt is a convenience */
             }
