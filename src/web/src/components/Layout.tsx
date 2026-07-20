@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { Button } from './ui'
 
 const nav = [
+  { to: '/guide', label: 'Guide', code: '00' },
   { to: '/settings', label: 'Global Settings', code: '01' },
   { to: '/credentials', label: 'Credentials', code: '02' },
   { to: '/providers', label: 'Providers', code: '03' },

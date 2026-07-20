@@ -4,13 +4,13 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 export type ButtonStyle = 'text' | 'icons' | 'ascii'
 
 export const BUTTON_STYLES: { value: ButtonStyle; label: string; hint: string }[] = [
+  { value: 'text', label: 'text', hint: 'full words (deploy, start, stop) — clearest, but widest' },
   { value: 'ascii', label: 'ascii', hint: 'monochrome glyphs (▲ ▶ ■) — compact, matches the terminal theme' },
   { value: 'icons', label: 'icons', hint: 'colour emoji (🚀 ▶ ⏹) — compact' },
-  { value: 'text', label: 'text', hint: 'full words (deploy, start, stop) — clearest, but widest' },
 ]
 
 const STORAGE_KEY = 'gluetunweb.buttonStyle'
-const DEFAULT: ButtonStyle = 'ascii'
+const DEFAULT: ButtonStyle = 'text'
 
 function read(): ButtonStyle {
   try {
