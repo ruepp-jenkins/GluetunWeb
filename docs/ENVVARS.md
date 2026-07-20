@@ -41,7 +41,7 @@ catalog is empty and the provider field simply accepts free-text.
 | Variable | Description | Example |
 | --- | --- | --- |
 | `TZ` | IANA timezone for container logs/scheduling. | `Europe/Berlin` |
-| `PUBLICIP_API` | Service Gluetun queries for the tunnel's public IP: `ipinfo`, `ip2location`, `cloudflare`. | `ipinfo` |
+| `PUBLICIP_API` | Service Gluetun queries for the tunnel's public IP: `ipinfo`, `ifconfigco`, `ip2location`, `cloudflare`, a custom value, or a comma-separated fallback list. | `ipinfo` |
 | `PUBLICIP_API_TOKEN` | Optional token for the public-IP service (higher rate limits). Stored encrypted. | `a1b2c3d4e5` |
 | `HTTPPROXY` | Enables Gluetun's built-in HTTP proxy (`on`/`off`). Toggled per connection. | `on` |
 | `HTTPPROXY_USER` | Optional HTTP proxy username. | `proxyuser` |
@@ -49,21 +49,25 @@ catalog is empty and the provider field simply accepts free-text.
 | `HTTPPROXY_LISTENING_ADDRESS` | Address:port the HTTP proxy binds inside the container. | `:8888` |
 | `HTTPPROXY_STEALTH` | Removes proxy-identifying headers (`on`/`off`). | `on` |
 | `HTTPPROXY_LOG` | Logs each HTTP proxy request (`on`/`off`). | `off` |
-| `HTTP_CONTROL_SERVER_AUTH_CONFIG_FILEPATH` | Path to the generated control-server auth file. GluetunWeb injects a `config.toml` at `/gluetun/auth/config.toml` when auth is `basic` or `apikey`. | `/gluetun/auth/config.toml` |
+| `HTTP_CONTROL_SERVER_AUTH_CONFIG_FILEPATH` | Path to the generated control-server auth file. GluetunWeb **always** injects a `config.toml` here (see below). | `/gluetunweb/config.toml` |
 
 ### Control-server `config.toml`
 
-When control-server auth is **basic** or **apikey**, GluetunWeb generates and injects a role file:
+GluetunWeb generates and injects this role file into **every** Gluetun container (onto the config
+volume at `/gluetunweb/config.toml`), for all three auth modes:
 
 ```toml
 [[roles]]
 name = "gluetunweb"
-routes = ["GET /v1/publicip/ip", "GET /v1/vpn/status", "PUT /v1/vpn/status", ...]
-auth = "apikey"          # or "basic"
-apikey = "FdaMDnTs9fiqSqkNQ4RKH7"   # or username/password for basic
+routes = ["GET /v1/vpn/status", "GET /v1/publicip/ip", "GET /v1/portforward", ...]
+auth = "apikey"          # or "basic", or "none"
+apikey = "FdaMDnTs9fiqSqkNQ4RKH7"   # (basic → username/password; none → no credentials)
 ```
 
-Generate an API key from the UI (**Generate**), which mirrors `docker run --rm qmcgaw/gluetun
+It is written even for **`none`** because current Gluetun denies any control-server route no role
+covers — omitting the file would make the dashboard's own status/public-IP reads return
+`Unauthorized`. See [How the dashboard reads real VPN state](#control-server-how-the-dashboard-reads-real-vpn-state).
+For `apikey`, generate a key from the UI (**Generate**) — it mirrors `docker run --rm qmcgaw/gluetun
 genkey` (a 22-char Base58 value).
 
 ---

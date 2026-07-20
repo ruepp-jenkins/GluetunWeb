@@ -7,8 +7,12 @@ retro-terminal dashboard, without hand-editing `docker-compose.yml` files.
 
 ```
 ~/gluetunweb — proxy control panel
-[01] Settings  [02] Credentials  [03] Providers  [04] Custom VPN  [05] Connections
+[00] Guide  [01] Settings  [02] Credentials  [03] Providers
+[04] Custom VPN  [05] Connections  [06] Load Balancers
 ```
+
+A first-run **Guide** walks you through the flow end to end (each step links straight to its page),
+and after login the dashboard lands on it until you have your first connection — then on Connections.
 
 - **Backend:** ASP.NET Core 10 (C#) Web API · EF Core + SQLite · Docker.DotNet
 - **Frontend:** React 19 + Vite + TypeScript + Tailwind CSS v4 (dark, monospaced, high-density)
@@ -21,7 +25,8 @@ retro-terminal dashboard, without hand-editing `docker-compose.yml` files.
 ### 01 · Global Settings
 Manage timezone (`TZ`), the public-IP API (`PUBLICIP_API` — presets or a custom value, + token), the HTTP proxy block, and the
 control-server authentication mode (`none` / `basic` / `apikey`, with an API-key generator that
-mirrors `gluetun genkey`). Every field shows its **environment-variable description and example
+mirrors `gluetun genkey`), the auto-assign port ranges, and a per-browser **button style**
+(text / ascii / icons). Every field shows its **environment-variable description and example
 inline** — no tooltips.
 
 ### 02 · Credentials
@@ -83,7 +88,8 @@ needs.
 Every container GluetunWeb creates is stamped with `managed-by=gluetunweb` +
 `gluetunweb.connection=<id>` labels. The page detects **orphaned** labeled containers (no matching
 connection — e.g. left after a failed delete) and offers to remove them; removal is label-verified
-so it can never touch unrelated containers.
+so it can never touch unrelated containers. Each row also has a **duplicate** action that opens the
+create dialog pre-filled from an existing entry (available on Providers, Custom VPN and Connections).
 
 ### 06 · Load Balancers
 Create [Socks5BalancerAsio](https://github.com/Socks5Balancer/Socks5BalancerAsio)
@@ -175,8 +181,11 @@ Open http://localhost:5173. A `gluetunweb.db` file is created next to the API fo
 ### Tests
 
 ```bash
-dotnet test        # 32 unit tests: port manager, parsers, crypto, identifier, tar, auth config
+dotnet test        # 84 unit tests: port blocks/layout, parsers, crypto, identifier, tar,
+                   # auth config, DNS/port-forwarding env, provider cascade, credential resolution
 ```
+
+The frontend is typechecked and built with `npm run build` (or `npx tsc --noEmit`) from `src/web`.
 
 ---
 
@@ -201,21 +210,33 @@ ASP.NET Core API ──► EF Core / SQLite      (config + AES-encrypted secrets
 - A background **reconciler** keeps the stack self-healing under external updates: if something
   recreates a Gluetun container, it retracks the new id and relinks the SOCKS5 sidecar (whose network
   namespace points at the old container id). It never resurrects removed containers or restarts
-  connections you stopped. See [docs/ENVVARS.md](docs/ENVVARS.md#self-healing-after-an-external-recreate).
+  connections you stopped.
+- The dashboard reads **Gluetun's own control server** for real tunnel state (VPN status, exit IP,
+  forwarded port), and reaches each container's published port at whatever address actually works
+  from where it runs — `localhost` on the host, or the host gateway / `host.docker.internal` when the
+  dashboard is itself a container on a different Docker network.
+
+These background behaviours — what runs on a timer, what state is polled, and where everything is
+stored — are documented in **[docs/AUTOMATIONS.md](docs/AUTOMATIONS.md)**.
 
 Project layout:
 
 ```
 src/GluetunWeb.Api/     ASP.NET Core API
   Auth/ Crypto/ Data/ Docker/ Gluetun/ Services/ Endpoints/ Models/ Validation/
+  Services/ContainerReconcilerService.cs   background self-heal
+  Services/ProviderCatalogRefreshService.cs  periodic git pull
+  Gluetun/GluetunControlClient.cs          reads real VPN state
+  Services/HostEndpointResolver.cs         reaches published ports cross-network
 src/GluetunWeb.Api.Tests/  xUnit tests
 src/web/                React + Tailwind SPA (built into the API's wwwroot)
-docs/                   PODMAN.md, ENVVARS.md
+docs/                   AUTOMATIONS.md, ENVVARS.md, PODMAN.md
 Dockerfile              multi-stage build
 docker-compose.yml
 ```
 
-See [docs/ENVVARS.md](docs/ENVVARS.md) for the full environment-variable catalog.
+See [docs/ENVVARS.md](docs/ENVVARS.md) for the full environment-variable catalog and
+[docs/AUTOMATIONS.md](docs/AUTOMATIONS.md) for the background automation & storage reference.
 
 ---
 
