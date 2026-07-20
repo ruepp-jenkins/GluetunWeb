@@ -6,7 +6,7 @@ import { Modal } from '../components/Modal'
 import { Field, Input, Select } from '../components/Field'
 import { TagSelect } from '../components/TagSelect'
 import { CredentialPicker } from '../components/CredentialPicker'
-import { Button, Banner, Spinner, EmptyRow, IconButton, icons } from '../components/ui'
+import { Button, Banner, Spinner, EmptyRow, ActionButton } from '../components/ui'
 import { providerSchema, zodErrors } from '../lib/validation'
 
 const empty: ProviderRequest = {
@@ -170,9 +170,9 @@ export function ProvidersPage() {
               </Td>
               <Td className="text-muted">{p.serverCountries || p.serverHostnames || '—'}</Td>
               <Td className="text-right">
-                <div className="flex justify-end gap-1">
-                  <IconButton variant="ghost" label="edit" icon={icons.edit} onClick={() => setEditing(p)} />
-                  <IconButton variant="danger" label="delete" icon={icons.del} onClick={() => remove(p)} />
+                <div className="flex flex-wrap justify-end gap-1">
+                  <ActionButton variant="ghost" action="edit" onClick={() => setEditing(p)} />
+                  <ActionButton variant="danger" action="del" onClick={() => remove(p)} />
                 </div>
               </Td>
             </Tr>

@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { ButtonStyleProvider } from './context/ButtonStyleContext'
 import { Layout } from './components/Layout'
 import { LoginPage } from './pages/LoginPage'
 import { GlobalSettingsPage } from './pages/GlobalSettingsPage'
@@ -43,7 +44,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Gate />
+        <ButtonStyleProvider>
+          <Gate />
+        </ButtonStyleProvider>
       </AuthProvider>
     </BrowserRouter>
   )

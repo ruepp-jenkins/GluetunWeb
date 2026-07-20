@@ -12,7 +12,7 @@ import type {
 import { Table, Th, Td, Tr } from '../components/Table'
 import { Modal } from '../components/Modal'
 import { Field, Input, Select } from '../components/Field'
-import { Button, Banner, Panel, Spinner, StatusBadge, EmptyRow, Toggle, IconButton, icons } from '../components/ui'
+import { Button, Banner, Panel, Spinner, StatusBadge, EmptyRow, Toggle, ActionButton } from '../components/ui'
 import {
   CodeBlock,
   EndpointRow,
@@ -174,22 +174,22 @@ export function ConnectionsPage() {
                   {c.portBlockStart ? `${c.portBlockStart}–${c.portBlockEnd}` : 'unassigned'}
                 </Td>
                 <Td>
-                  <div className="flex justify-end gap-1">
-                    <IconButton
+                  <div className="flex flex-wrap justify-end gap-1">
+                    <ActionButton
                       variant="primary"
-                      label={deployed ? 'redeploy' : 'deploy'}
-                      icon={busy ? icons.busy : icons.deploy}
+                      action={deployed ? 'redeploy' : 'deploy'}
+                      busy={busy}
                       disabled={busy}
                       onClick={() => void act(c, api.deployConnection)}
                     />
-                    <IconButton variant="ghost" label="start" icon={icons.start} disabled={busy || !deployed} onClick={() => void act(c, api.startConnection)} />
-                    <IconButton variant="ghost" label="stop" icon={icons.stop} disabled={busy || !deployed} onClick={() => void act(c, api.stopConnection)} />
-                    <IconButton variant="ghost" label="restart" icon={icons.restart} disabled={busy || !deployed} onClick={() => void act(c, api.restartConnection)} />
-                    <IconButton variant="ghost" label="logs" icon={icons.logs} disabled={!deployed} onClick={() => setLogsFor(c)} />
-                    <IconButton variant="ghost" label="test" icon={icons.test} disabled={!deployed} onClick={() => setTestFor(c)} />
-                    <IconButton variant="ghost" label="info" icon={icons.info} onClick={() => setInfoFor(c)} />
-                    <IconButton variant="ghost" label="edit" icon={icons.edit} onClick={() => setEditing(c)} />
-                    <IconButton variant="danger" label="delete" icon={icons.del} disabled={busy} onClick={() => void remove(c)} />
+                    <ActionButton variant="ghost" action="start" disabled={busy || !deployed} onClick={() => void act(c, api.startConnection)} />
+                    <ActionButton variant="ghost" action="stop" disabled={busy || !deployed} onClick={() => void act(c, api.stopConnection)} />
+                    <ActionButton variant="ghost" action="restart" disabled={busy || !deployed} onClick={() => void act(c, api.restartConnection)} />
+                    <ActionButton variant="ghost" action="logs" disabled={!deployed} onClick={() => setLogsFor(c)} />
+                    <ActionButton variant="ghost" action="test" disabled={!deployed} onClick={() => setTestFor(c)} />
+                    <ActionButton variant="ghost" action="info" onClick={() => setInfoFor(c)} />
+                    <ActionButton variant="ghost" action="edit" onClick={() => setEditing(c)} />
+                    <ActionButton variant="danger" action="del" busy={busy} disabled={busy} onClick={() => void remove(c)} />
                   </div>
                 </Td>
               </Tr>
@@ -228,10 +228,11 @@ export function ConnectionsPage() {
                 <Td className="text-amber">{m.connection ?? '—'}</Td>
                 <Td className="text-right">
                   <div className="flex justify-end">
-                    <IconButton
+                    <ActionButton
                       variant="danger"
-                      label="remove from Docker"
-                      icon={removingId === m.id ? icons.busy : icons.del}
+                      action="del"
+                      label="remove"
+                      busy={removingId === m.id}
                       disabled={removingId === m.id}
                       onClick={() => void removeOrphan(m)}
                     />

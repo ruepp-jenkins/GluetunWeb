@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { useButtonStyle } from '../context/ButtonStyleContext'
 
 type Variant = 'primary' | 'ghost' | 'danger' | 'amber'
 
@@ -26,27 +27,48 @@ export function Button({
   )
 }
 
+/** Every row action, with its word plus its glyph in each compact display mode. */
+export type ActionKey =
+  | 'deploy'
+  | 'redeploy'
+  | 'start'
+  | 'stop'
+  | 'restart'
+  | 'logs'
+  | 'test'
+  | 'info'
+  | 'edit'
+  | 'del'
+
+interface ActionGlyphs {
+  word: string
+  icons: string // colour emoji
+  ascii: string // monochrome glyph
+}
+
 /**
- * Shared emoji glyphs for row actions. Centralised so every page uses the same icon for the same
- * action — deploy is always 🚀, delete always 🗑, and so on.
+ * Single source of truth for row actions across every page, so the same action always looks the
+ * same. `word` drives text mode (and the tooltip everywhere); `icons`/`ascii` are the compact modes.
  */
-export const icons = {
-  deploy: '🚀',
-  start: '▶',
-  stop: '⏹',
-  restart: '🔁',
-  logs: '📃',
-  test: '🧪',
-  info: 'ℹ',
-  edit: '✎',
-  del: '🗑',
-  busy: '⏳',
-} as const
+export const ACTIONS: Record<ActionKey, ActionGlyphs> = {
+  deploy: { word: 'deploy', icons: '🚀', ascii: '▲' },
+  redeploy: { word: 'redeploy', icons: '🚀', ascii: '↥' },
+  start: { word: 'start', icons: '▶', ascii: '▶' },
+  stop: { word: 'stop', icons: '⏹', ascii: '■' },
+  restart: { word: 'restart', icons: '🔁', ascii: '↻' },
+  logs: { word: 'logs', icons: '📃', ascii: '≡' },
+  test: { word: 'test', icons: '🧪', ascii: '✓' },
+  info: { word: 'info', icons: 'ℹ', ascii: 'ℹ' },
+  edit: { word: 'edit', icons: '✎', ascii: '✎' },
+  del: { word: 'del', icons: '🗑', ascii: '✕' },
+}
+
+const BUSY = { text: '···', icons: '⏳', ascii: '…' } as const
 
 /**
  * Compact single-glyph action button. Keeps the bordered terminal look of {@link Button} but shows
- * an icon instead of text, with the word exposed via title/aria-label — so a row of actions fits on
- * one line. Used for every per-row action across the app.
+ * an icon instead of text, with the word exposed via title/aria-label. Used to build
+ * {@link ActionButton}; prefer that so the display mode is honoured.
  */
 export function IconButton({
   icon,
@@ -66,6 +88,41 @@ export function IconButton({
       <span aria-hidden="true">{icon}</span>
     </button>
   )
+}
+
+/**
+ * A row action rendered per the user's display preference: full-width word (text), or a compact
+ * square glyph (icons / ascii). The word is always the tooltip. `busy` swaps in a working indicator
+ * and `label` overrides the shown word (e.g. an orphan's "remove" reusing the `del` action).
+ */
+export function ActionButton({
+  action,
+  variant = 'ghost',
+  busy = false,
+  label,
+  ...rest
+}: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
+  action: ActionKey
+  variant?: Variant
+  busy?: boolean
+  label?: string
+}) {
+  const { style } = useButtonStyle()
+  const glyphs = ACTIONS[action]
+  const word = label ?? glyphs.word
+
+  if (style === 'text') {
+    // Actions are never form submits — default to type="button" so a text-mode button placed inside
+    // a <form> (e.g. the settings preview) doesn't submit it. A caller can still override via rest.
+    return (
+      <Button type="button" variant={variant} {...rest}>
+        {busy ? BUSY.text : word}
+      </Button>
+    )
+  }
+
+  const glyph = style === 'ascii' ? glyphs.ascii : glyphs.icons
+  return <IconButton variant={variant} label={word} icon={busy ? BUSY[style] : glyph} {...rest} />
 }
 
 export function Toggle({

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { api, ApiError } from '../api/client'
 import type { Settings, SettingsUpdate } from '../api/types'
 import { Field, Input, Select } from '../components/Field'
-import { Panel, Button, Banner, Toggle, Spinner } from '../components/ui'
+import { Panel, Button, Banner, Toggle, Spinner, ActionButton } from '../components/ui'
+import { useButtonStyle, BUTTON_STYLES } from '../context/ButtonStyleContext'
 import { settingsSchema, zodErrors } from '../lib/validation'
 
 const secretPlaceholder = (has: boolean) => (has ? '•••••••• set — blank keeps it' : 'not set')
@@ -73,6 +74,8 @@ export function GlobalSettingsPage() {
       </header>
 
       {banner && <Banner kind={banner.kind === 'ok' ? 'ok' : 'error'}>{banner.text}</Banner>}
+
+      <ButtonStylePanel />
 
       <Panel title="General">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -276,4 +279,54 @@ function toForm(s: Settings): SettingsUpdate {
     balancerPortRangeStart: s.balancerPortRangeStart,
     balancerPortRangeEnd: s.balancerPortRangeEnd,
   }
+}
+
+/**
+ * Client-side display preference for the row-action buttons (text / icons / ascii). Saved in this
+ * browser only, so it is separate from the server-persisted settings form above and never posts.
+ */
+function ButtonStylePanel() {
+  const { style, setStyle } = useButtonStyle()
+  const active = BUTTON_STYLES.find((o) => o.value === style)
+
+  return (
+    <Panel title="Button style (this browser)">
+      <div className="grid gap-3">
+        <p className="text-[12px] text-muted">
+          How the per-row action buttons are shown. Saved in this browser, not on the server, so it
+          takes effect immediately without saving settings.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {BUTTON_STYLES.map((o) => (
+            <button
+              key={o.value}
+              type="button"
+              onClick={() => setStyle(o.value)}
+              className={`border px-3 py-1.5 text-[12px] uppercase tracking-wide transition-colors ${
+                style === o.value
+                  ? 'border-phosphor-dim bg-phosphor/10 text-phosphor'
+                  : 'border-line text-ink hover:border-line-bright'
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+        {active && <p className="text-[11px] text-faint">{active.hint}</p>}
+
+        <div className="flex flex-wrap items-center gap-1 border-t border-line pt-3">
+          <span className="mr-2 text-[11px] uppercase tracking-widest text-muted">live preview</span>
+          <ActionButton variant="primary" action="deploy" onClick={() => {}} />
+          <ActionButton variant="ghost" action="start" onClick={() => {}} />
+          <ActionButton variant="ghost" action="stop" onClick={() => {}} />
+          <ActionButton variant="ghost" action="restart" onClick={() => {}} />
+          <ActionButton variant="ghost" action="logs" onClick={() => {}} />
+          <ActionButton variant="ghost" action="test" onClick={() => {}} />
+          <ActionButton variant="ghost" action="info" onClick={() => {}} />
+          <ActionButton variant="ghost" action="edit" onClick={() => {}} />
+          <ActionButton variant="danger" action="del" onClick={() => {}} />
+        </div>
+      </div>
+    </Panel>
+  )
 }

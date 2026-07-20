@@ -4,7 +4,7 @@ import type { Credential, CustomVpn, CustomVpnRequest } from '../api/types'
 import { Table, Th, Td, Tr } from '../components/Table'
 import { Modal } from '../components/Modal'
 import { Field, Input, Select, TextArea } from '../components/Field'
-import { Button, Banner, Spinner, EmptyRow, IconButton, icons } from '../components/ui'
+import { Button, Banner, Spinner, EmptyRow, ActionButton } from '../components/ui'
 import { CredentialPicker } from '../components/CredentialPicker'
 import { customVpnSchema, zodErrors } from '../lib/validation'
 
@@ -73,9 +73,9 @@ export function CustomVpnPage() {
               <Td className="text-muted">{c.summary}</Td>
               <Td className="text-muted">{c.notes || '—'}</Td>
               <Td className="text-right">
-                <div className="flex justify-end gap-1">
-                  <IconButton variant="ghost" label="edit" icon={icons.edit} onClick={() => setEditing(c)} />
-                  <IconButton variant="danger" label="delete" icon={icons.del} onClick={() => remove(c)} />
+                <div className="flex flex-wrap justify-end gap-1">
+                  <ActionButton variant="ghost" action="edit" onClick={() => setEditing(c)} />
+                  <ActionButton variant="danger" action="del" onClick={() => remove(c)} />
                 </div>
               </Td>
             </Tr>
